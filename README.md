@@ -1,2 +1,0 @@
-# OCRtestODH
-OCR testing webpage 
