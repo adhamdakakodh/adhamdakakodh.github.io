@@ -139,30 +139,38 @@
     }
 
     async function callOcrApi(frontImageFile, backImageFile) {
-        const apiUrl = 'https://idsocrtest-d4acatbyh9dfdrgf.swedencentral-01.azurewebsites.net/api/process_id?code=lvwb8Sl7lKq5N9Ih9HNC4N_gC1N0ZwUdTwFFLWYbeT96AzFub8z-zw==';
+    const apiUrl = 'https://idsocrtest-d4acatbyh9dfdrgf.swedencentral-01.azurewebsites.net/api/process_id?code=lvwb8Sl7lKq5N9Ih9HNC4N_gC1N0ZwUdTwFFLWYbeT96AzFub8z-zw==';
 
-        // Create FormData to send both images
-        const formData = new FormData();
-        formData.append('front_image', frontImageFile);
-        formData.append('back_image', backImageFile);
+    // Convert files to ArrayBuffer (binary data)
+    const frontImageBuffer = await frontImageFile.arrayBuffer();
+    const backImageBuffer = await backImageFile.arrayBuffer();
 
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            body: formData
-        });
+    // Create a combined binary payload
+    const payload = {
+        front_image: Array.from(new Uint8Array(frontImageBuffer)),
+        back_image: Array.from(new Uint8Array(backImageBuffer))
+    };
 
-        const responseText = await response.text();
+    const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    });
 
-        if (!response.ok) {
-            throw new Error(responseText);
-        }
+    const responseText = await response.text();
 
-        try {
-            return JSON.parse(responseText);
-        } catch (e) {
-            return responseText;
-        }
+    if (!response.ok) {
+        throw new Error(responseText);
     }
+
+    try {
+        return JSON.parse(responseText);
+    } catch (e) {
+        return responseText;
+    }
+}
 
     function populateDetails(data) {
         outputContainer.innerHTML = '';
