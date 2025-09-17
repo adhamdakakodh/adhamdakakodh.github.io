@@ -109,6 +109,7 @@
             console.log('Front file selected');
             const file = event.target.files[0];
             if (file) {
+                console.log('Front file details:', { name: file.name, type: file.type, size: file.size });
                 frontFile = file;
                 const imageUrl = URL.createObjectURL(file);
                 frontImage.src = imageUrl;
@@ -122,6 +123,7 @@
             console.log('Back file selected');
             const file = event.target.files[0];
             if (file) {
+                console.log('Back file details:', { name: file.name, type: file.type, size: file.size });
                 backFile = file;
                 const imageUrl = URL.createObjectURL(file);
                 backImage.src = imageUrl;
@@ -157,6 +159,11 @@
 
         async function callOcrApi(frontImageFile, backImageFile) {
             console.log('Calling OCR API...');
+            console.log('Files being sent:', { 
+                front: frontImageFile ? { name: frontImageFile.name, type: frontImageFile.type } : 'null',
+                back: backImageFile ? { name: backImageFile.name, type: backImageFile.type } : 'null'
+            });
+            
             const apiUrl = 'https://idsocrtest-d4acatbyh9dfdrgf.swedencentral-01.azurewebsites.net/api/process_id?code=lvwb8Sl7lKq5N9Ih9HNC4N_gC1N0ZwUdTwFFLWYbeT96AzFub8z-zw==';
 
             // Create PDF from both images
@@ -188,6 +195,20 @@
 
         async function createPdfFromImages(frontImageFile, backImageFile) {
             console.log('Creating PDF from images...');
+            console.log('Files received in createPdfFromImages:', { 
+                front: frontImageFile ? { name: frontImageFile.name, type: frontImageFile.type } : 'null',
+                back: backImageFile ? { name: backImageFile.name, type: backImageFile.type } : 'null'
+            });
+            
+            // Validate files before proceeding
+            if (!frontImageFile || !backImageFile) {
+                throw new Error('One or both image files are missing');
+            }
+            
+            if (!(frontImageFile instanceof File) || !(backImageFile instanceof File)) {
+                throw new Error('Invalid file objects provided');
+            }
+            
             return new Promise((resolve, reject) => {
                 // Check if jsPDF is loaded
                 if (typeof window.jspdf === 'undefined') {
@@ -252,36 +273,53 @@
 
                                     // Generate PDF blob
                                     const pdfBlob = pdf.output('blob');
+                                    console.log('PDF created successfully, size:', pdfBlob.size);
                                     resolve(pdfBlob);
                                 };
                                 backImg.src = backImageBase64;
                             };
                             frontImg.src = frontImageBase64;
                         } catch (error) {
+                            console.error('Error creating PDF:', error);
                             reject(error);
                         }
                     }
                 };
 
                 reader1.onload = function(e) {
+                    console.log('Front image loaded as base64');
                     frontImageBase64 = e.target.result;
                     imagesLoaded++;
                     checkAndCreatePdf();
                 };
 
                 reader2.onload = function(e) {
+                    console.log('Back image loaded as base64');
                     backImageBase64 = e.target.result;
                     imagesLoaded++;
                     checkAndCreatePdf();
                 };
 
-                reader1.onerror = reader2.onerror = function(error) {
+                reader1.onerror = function(error) {
+                    console.error('Error reading front image:', error);
+                    reject(error);
+                };
+                
+                reader2.onerror = function(error) {
+                    console.error('Error reading back image:', error);
                     reject(error);
                 };
 
-                // Read both images
-                reader1.readAsDataURL(frontImageFile);
-                reader2.readAsDataURL(backImageFile);
+                // Read both images with validation
+                try {
+                    console.log('Starting to read front image...');
+                    reader1.readAsDataURL(frontImageFile);
+                    console.log('Starting to read back image...');
+                    reader2.readAsDataURL(backImageFile);
+                } catch (error) {
+                    console.error('Error starting file read:', error);
+                    reject(error);
+                }
             });
         }
 
@@ -361,8 +399,7 @@
 
         function resetDetails() {
             outputContainer.innerHTML = '';
-            frontFile = null;
-            backFile = null;
+            // Don't reset the files here - keep them for processing
             frontImage.src = '';
             backImage.src = '';
             imagePreviewContainer.classList.add('hidden');
