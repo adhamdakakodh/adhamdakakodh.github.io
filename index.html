@@ -328,78 +328,78 @@
         }
 
         function populateDetails(data) {
-            outputContainer.innerHTML = '';
+    outputContainer.innerHTML = '';
 
-            if (typeof data === 'object' && data !== null) {
-                // Check if the response contains separate front and back data
-                if (data.front && data.back) {
-                    // Display both front and back data
-                    let html = '<div class="space-y-8">';
-                    
-                    // Front data
-                    html += '<div class="bg-blue-50 p-4 rounded-lg">';
-                    html += '<h3 class="text-xl font-bold mb-4 text-blue-600">Front of ID Details</h3>';
-                    html += formatDataSection(data.front);
-                    html += '</div>';
-                    
-                    // Back data
-                    html += '<div class="bg-green-50 p-4 rounded-lg">';
-                    html += '<h3 class="text-xl font-bold mb-4 text-green-600">Back of ID Details</h3>';
-                    html += formatDataSection(data.back);
-                    html += '</div>';
-                    
-                    html += '</div>';
-                    outputContainer.innerHTML = html;
-                } else {
-                    // Single data structure (fallback for backward compatibility)
-                    outputContainer.innerHTML = formatDataSection(data);
-                }
-            } else {
-                outputContainer.innerHTML = `<pre class="whitespace-pre-wrap break-all text-red-600">${String(data)}</pre>`;
-            }
+    if (typeof data === 'object' && data !== null) {
+        // Check if the response contains separate front and back data
+        if ((data.front && data.back) || (data.front_data && data.back_data)) {
+            // Display both front and back data
+            let html = '<div class="space-y-8">';
+            
+            // Front data
+            html += '<div class="bg-blue-50 p-4 rounded-lg">';
+            html += '<h3 class="text-xl font-bold mb-4 text-blue-600">Front of ID Details</h3>';
+            html += formatDataSection(data.front || data.front_data);
+            html += '</div>';
+            
+            // Back data
+            html += '<div class="bg-green-50 p-4 rounded-lg">';
+            html += '<h3 class="text-xl font-bold mb-4 text-green-600">Back of ID Details</h3>';
+            html += formatDataSection(data.back || data.back_data);
+            html += '</div>';
+            
+            html += '</div>';
+            outputContainer.innerHTML = html;
+        } else {
+            // Single data structure (fallback for backward compatibility)
+            outputContainer.innerHTML = formatDataSection(data);
         }
+    } else {
+        outputContainer.innerHTML = `<pre class="whitespace-pre-wrap break-all text-red-600">${String(data)}</pre>`;
+    }
+}
 
-        function formatDataSection(data) {
-            const fieldLabels = {
-                "first name": "First Name",
-                "last name": "Last Name",
-                "address_line_1": "Address Line 1",
-                "address_line_2": "Address Line 2",
-                "national_id": "National ID",
-                "date_of_birth": "Date of Birth",
-                "issuing_date": "Issue Date",
-                "profession": "Profession",
-                "gender": "Gender",
-                "religion": "Religion",
-                "marital_status": "Marital Status",
-                "valid_until": "Valid Until"
-            };
+function formatDataSection(data) {
+    const fieldLabels = {
+        "first name": "First Name",
+        "last name": "Last Name",
+        "address_line_1": "Address Line 1",
+        "address_line_2": "Address Line 2",
+        "national_id": "National ID",
+        "date_of_birth": "Date of Birth",
+        "issuing_date": "Issuing Date", 
+        "profession": "Profession",
+        "gender": "Gender",
+        "religion": "Religion",
+        "marital_status": "Marital Status",
+        "valid_until": "Valid Until"
+    };
 
-            let detailsFound = false;
-            let listItemsHtml = '';
+    let detailsFound = false;
+    let listItemsHtml = '';
 
-            for (const key in fieldLabels) {
-                if (data.hasOwnProperty(key) && data[key]) {
-                    detailsFound = true;
-                    const label = fieldLabels[key];
-                    const value = String(data[key]).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    for (const key in fieldLabels) {
+        if (data.hasOwnProperty(key) && data[key]) {
+            detailsFound = true;
+            const label = fieldLabels[key];
+            const value = String(data[key]).replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-                    listItemsHtml += `
-                        <div class="flex justify-between items-start py-3 border-b last:border-b-0">
-                            <dt class="font-semibold text-gray-600">${label}:</dt>
-                            <dd class="text-gray-800 text-right ml-4">${value}</dd>
-                        </div>
-                    `;
-                }
-            }
-           
-            if (detailsFound) {
-                return `<dl>${listItemsHtml}</dl>`;
-            } else {
-                const escapedJson = JSON.stringify(data, null, 2).replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                return `<p class="text-center text-gray-500">Could not extract expected details. The API returned the following:</p><pre class="mt-2 text-sm whitespace-pre-wrap break-all text-gray-800">${escapedJson}</pre>`;
-            }
+            listItemsHtml += `
+                <div class="flex justify-between items-start py-3 border-b last:border-b-0">
+                    <dt class="font-semibold text-gray-600">${label}:</dt>
+                    <dd class="text-gray-800 text-right ml-4">${value}</dd>
+                </div>
+            `;
         }
+    }
+   
+    if (detailsFound) {
+        return `<dl>${listItemsHtml}</dl>`;
+    } else {
+        const escapedJson = JSON.stringify(data, null, 2).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        return `<p class="text-center text-gray-500">Could not extract expected details. The API returned the following:</p><pre class="mt-2 text-sm whitespace-pre-wrap break-all text-gray-800">${escapedJson}</pre>`;
+    }
+}
 
         function resetDetails() {
             outputContainer.innerHTML = '';
